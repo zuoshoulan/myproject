@@ -24,7 +24,7 @@ public class TargetHttpRequestInitializer {
     @SneakyThrows
     public static void connectToTargetServer(ChannelHandlerContext clientCtx, FullHttpRequest request) {
         request.retain();
-        HttpMethod method = request.method();
+        final HttpMethod method = request.method();
         URI uri = new URI(request.uri());
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
@@ -70,7 +70,7 @@ public class TargetHttpRequestInitializer {
                         ch.pipeline().addLast(new HttpClientCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
-                        ch.pipeline().addLast(new TargetHttpHandler(clientCtx, uri));
+                        ch.pipeline().addLast(new TargetHttpHandler(clientCtx, uri, method));
                     }
                 });
 

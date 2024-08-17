@@ -5,9 +5,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author zhengweikang
@@ -18,9 +22,12 @@ public class TargetHttpHandler extends ChannelDuplexHandler {
     private final ChannelHandlerContext clientCtx;
     private final URI uri;
 
-    public TargetHttpHandler(ChannelHandlerContext clientCtx, URI uri) {
+    private final HttpMethod method;
+
+    public TargetHttpHandler(ChannelHandlerContext clientCtx, URI uri, HttpMethod method) {
         this.clientCtx = clientCtx;
         this.uri = uri;
+        this.method = method;
     }
 
     @Override
@@ -28,9 +35,36 @@ public class TargetHttpHandler extends ChannelDuplexHandler {
         if (msg instanceof FullHttpResponse) {
             FullHttpResponse response = (FullHttpResponse) msg;
             response.headers().add("proxy", "zwk");
+            fillCorsrHeaders(response);
             clientCtx.write(response);
         } else {
             clientCtx.write(msg);
+        }
+    }
+
+    private void fillCorsrHeaders(FullHttpResponse response) {
+        Map<String, Object> map = new HashMap();
+        map.put("Access-Control-Allow-Credentials", true);
+        map.put("Access-Control-Allow-Headers", "authorization");
+
+        map.put("Access-Control-Allow-Origin", "http://sem-dev.vevor-internal.net");
+        map.put("Access-Control-Expose-Headers", "*");
+        map.put("Access-Control-Max-Age", 18000L);
+
+
+        map.put("Access-Control-Allow-Methods", "GET");
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (StringUtils.isEmpty(response.headers().get(key))) {
+                response.headers().add(key, value);
+            }
+        }
+
+        String accessControlAllowCredentials = "Access-Control-Allow-Credentials";
+        if (StringUtils.isEmpty(response.headers().get(accessControlAllowCredentials))) {
+            response.headers().add(accessControlAllowCredentials, true);
         }
     }
 
