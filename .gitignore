@@ -1,0 +1,88 @@
+# .gitignore for Java projects
+
+# IDEs
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.project
+.classpath
+.metadata/
+
+# NetBeans 6+
+nbproject/private/
+
+# NetBeans 7+
+nbactions.xml
+
+# NetBeans 8+
+nb-configuration/
+
+# Maven
+target/
+
+# Gradle
+build/
+dist/
+.gradle/
+
+# Ant
+build/
+dist/
+
+# IntelliJ IDEA
+*.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Other IDEs
+*.sbt
+*.sbtopts
+
+# Local configuration
+local.properties
+local.properties.template
+
+# OS X
+.DS_Store
+
+# IntelliJ IDEA
+*.sbt/
+*.sbtopts/
+
+# Temporary files
+*.swp
+*.bak
+*.tmp
+*.log
+
+.vscode
+
+# Dependency files
+dependency-check-report/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.aar
+*.sar
+*.par
+
+# Test reports
+surefire-reports/
+test-classes/
+
+# Jacoco
+jacoco.exec
+
+# SonarQube
+sonar-project.properties
+.sonar/
