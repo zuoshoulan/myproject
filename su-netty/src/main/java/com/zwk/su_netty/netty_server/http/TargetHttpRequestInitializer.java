@@ -5,9 +5,13 @@ import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 
@@ -24,12 +28,32 @@ public class TargetHttpRequestInitializer {
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
 
+        if (StringUtils.startsWith(uri.getPath(), "/cost-calculate-service")) {
+
+        }
+
+        SslContext sslCtx = null;
+        if (uri.getScheme().equalsIgnoreCase("https")) {
+            try {
+                sslCtx = SslContextBuilder.forClient()
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .build();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        final SslContext finalSslCtx = sslCtx;
+
+
         Bootstrap b = new Bootstrap();
         b.group(clientCtx.channel().eventLoop())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
+                        if (finalSslCtx != null) {
+                            ch.pipeline().addLast(finalSslCtx.newHandler(ch.alloc()));
+                        }
                         ch.pipeline().addLast(new HttpClientCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
@@ -37,9 +61,9 @@ public class TargetHttpRequestInitializer {
                     }
                 });
 
-        ChannelFuture outboundFuture = b.connect(targetHost, targetPort);
+        ChannelFuture targetFuture = b.connect(targetHost, targetPort);
 
-        outboundFuture.addListener((ChannelFutureListener) future -> {
+        targetFuture.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
                 Channel targetOutboundChannel = future.channel();
                 clientCtx.channel().attr(HttpProxyServerHandler.outboundChannelKey).set(targetOutboundChannel);
@@ -47,7 +71,7 @@ public class TargetHttpRequestInitializer {
                 FullHttpRequest fullRequest = new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         request.method(),
-                        uri.getPath(),
+                        request.uri(),
                         request.content().copy()
                 );
 
