@@ -27,10 +27,22 @@ public class TargetHttpRequestInitializer {
         URI uri = new URI(request.uri());
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
-
-        if (StringUtils.startsWith(uri.getPath(), "/cost-calculate-service")) {
-
+        String targetPath = request.uri();
+        String calculatePrefix = "/cost-calculate-service";
+        if (StringUtils.startsWith(uri.getPath(), calculatePrefix)) {
+            targetPath = StringUtils.substringAfter(targetPath, calculatePrefix);
+            targetHost = "localhost";
+            targetPort = 8094;
         }
+        String centerPrefix = "/cost-center-service";
+        if (StringUtils.startsWith(uri.getPath(), centerPrefix)) {
+            targetPath = StringUtils.substringAfter(targetPath, centerPrefix);
+            targetHost = "localhost";
+            targetPort = 8092;
+        }
+
+
+        final String finalTargetPath = targetPath;
 
         SslContext sslCtx = null;
         if (uri.getScheme().equalsIgnoreCase("https")) {
@@ -71,7 +83,7 @@ public class TargetHttpRequestInitializer {
                 FullHttpRequest fullRequest = new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         request.method(),
-                        request.uri(),
+                        finalTargetPath,
                         request.content().copy()
                 );
 
