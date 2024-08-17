@@ -44,6 +44,8 @@ public class TargetHttpHandler extends ChannelDuplexHandler {
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
             request.headers().set(HttpHeaderNames.HOST, uri.getHost());
+
+
         }
         ctx.write(msg, promise);
     }

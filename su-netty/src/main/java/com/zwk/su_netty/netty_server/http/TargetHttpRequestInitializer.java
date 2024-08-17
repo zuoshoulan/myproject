@@ -6,6 +6,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
 
 import java.net.URI;
@@ -17,7 +18,8 @@ import java.net.URI;
 public class TargetHttpRequestInitializer {
 
     @SneakyThrows
-    public static void connectToTargetServer(ChannelHandlerContext clientCtx, HttpRequest request) {
+    public static void connectToTargetServer(ChannelHandlerContext clientCtx, FullHttpRequest request) {
+        request.retain();
         URI uri = new URI(request.uri());
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
@@ -45,13 +47,18 @@ public class TargetHttpRequestInitializer {
                 FullHttpRequest fullRequest = new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         request.method(),
-                        uri.getPath());
+                        uri.getPath(),
+                        request.content().copy()
+                );
 
                 for (CharSequence name : request.headers().names()) {
                     for (CharSequence value : request.headers().getAll(name)) {
                         fullRequest.headers().add(name, value);
                     }
                 }
+
+                // 释放原始的请求体
+                ReferenceCountUtil.release(request.content());
 
                 targetOutboundChannel.writeAndFlush(fullRequest);
             } else {
