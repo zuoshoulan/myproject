@@ -62,7 +62,7 @@ public class TargetHttpRequestInitializer {
         }
         final SslContext finalSslCtx = sslCtx;
         if (finalMyRouter) {
-            LogConstant.myRouterLogger.info("转发到自己的机器的 request 旧url:{} 新url:{}\n", request.uri());
+            LogConstant.myRouterLogger.info("即将 转发到自己的机器的 request 旧url:{}", request.uri());
         }
 
         Bootstrap b = new Bootstrap();
@@ -96,7 +96,7 @@ public class TargetHttpRequestInitializer {
                 );
 
                 if (finalMyRouter) {
-                    LogConstant.myRouterLogger.info("转发到自己的机器的 request 旧url:{} 新url:{}\n", request.uri(), fullRequest.uri());
+                    LogConstant.myRouterLogger.info("转发到自己的机器的请求 method:{} 旧url:{} 新url:{}\n", method, request.uri(), fullRequest.uri());
                 }
 
                 for (CharSequence name : request.headers().names()) {
