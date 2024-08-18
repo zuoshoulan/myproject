@@ -4,3 +4,5 @@ server:
 logging:
   file:
     path: /app/su/logs
+  level:
+    org.springframework.context.support: debug
