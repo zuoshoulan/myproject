@@ -43,11 +43,11 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
-        <file>${LOG_PATH}/info.${APP_NAME}.log</file>
+        <file>${LOG_PATH}/service-${APP_NAME}.log</file>
         <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
-            <fileNamePattern>${LOG_PATH}/info.${APP_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/service-${APP_NAME}.log.%d{yyyy-MM-dd}</fileNamePattern>
             <maxHistory>40</maxHistory>
         </rollingPolicy>
         <!--日志输出编码格式化-->
