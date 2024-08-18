@@ -24,18 +24,26 @@ public class TargetHttpHandler extends ChannelDuplexHandler {
 
     private final HttpMethod method;
 
-    public TargetHttpHandler(ChannelHandlerContext clientCtx, URI uri, HttpMethod method) {
+    private final boolean myRouter;
+
+    public TargetHttpHandler(ChannelHandlerContext clientCtx, URI uri, HttpMethod method, boolean myRouter) {
         this.clientCtx = clientCtx;
         this.uri = uri;
         this.method = method;
+        this.myRouter = myRouter;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof FullHttpResponse) {
             FullHttpResponse response = (FullHttpResponse) msg;
+
             response.headers().add("proxy", "zwk");
-            fillCorsrHeaders(response);
+            if (myRouter) {
+                fillCorsrHeaders(response);
+            }
+
+
             clientCtx.write(response);
         } else {
             clientCtx.write(msg);
@@ -78,8 +86,6 @@ public class TargetHttpHandler extends ChannelDuplexHandler {
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
             request.headers().set(HttpHeaderNames.HOST, uri.getHost());
-
-
         }
         ctx.write(msg, promise);
     }

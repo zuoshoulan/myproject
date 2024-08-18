@@ -1,2 +1,6 @@
 server:
   port: 8000
+
+logging:
+  file:
+    path: /app/su/logs

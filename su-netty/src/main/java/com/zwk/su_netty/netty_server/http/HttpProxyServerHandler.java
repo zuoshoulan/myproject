@@ -1,11 +1,12 @@
 package com.zwk.su_netty.netty_server.http;
 
+import com.zwk.su_netty.log.LogConstant;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
-
-import java.net.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author zhengweikang
@@ -16,7 +17,7 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        log.info("msg:{}\n", msg);
+        LogConstant.accessLogger.debug("access msg:{}\n", msg);
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
             TargetHttpRequestInitializer.connectToTargetServer(ctx, request);

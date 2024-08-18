@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 动态日志级别 -->
+    <jmxConfigurator/>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
+    <!-- 从配置文件中读取log文件的路径配置信息 -->
+    <springProperty scope="context" name="LOG_PATH" source="${logging.file.path}"/>
+
+    <!-- 全局统一的Log格式 -->
+    <property name="GLOBAL_LOG_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+    <!-- 输出到控制台 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!--控制台默认默认输出DEBUG级别日志-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <!--日志输出编码格式化-->
+        <encoder>
+            <pattern>${GLOBAL_LOG_PATTERN}{full,
+                java.lang.reflect.Method,
+                org.apache.catalina,
+                org.apache.tomcat,
+                org.springframework.aop,
+                org.springframework.security,
+                org.springframework.transaction,
+                org.springframework.web,
+                sun.reflect,
+                net.sf.cglib,
+                ByCGLIB
+                }
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    <appender name="logFileError" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--控制台默认默认输出DEBUG级别日志-->
+        <!-- 果日志级别等于配置级别，过滤器会根据onMath 和 onMismatch接收或拒绝日志。 -->
+        <!--默认INFO级别日志-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <file>${LOG_PATH}/error.${APP_NAME}.log</file>
+        <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
+            <fileNamePattern>${LOG_PATH}/error.${APP_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>40</maxHistory>
+        </rollingPolicy>
+        <!--日志输出编码格式化-->
+        <encoder>
+            <pattern>${GLOBAL_LOG_PATTERN}{full,
+                java.lang.reflect.Method,
+                org.apache.catalina,
+                org.apache.tomcat,
+                org.springframework.aop,
+                org.springframework.security,
+                org.springframework.transaction,
+                org.springframework.web,
+                sun.reflect,
+                net.sf.cglib,
+                ByCGLIB
+                }
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    <!-- 输出到文件 -->
+    <appender name="logFileInfo" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--默认INFO级别日志-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <file>${LOG_PATH}/info.${APP_NAME}.log</file>
+        <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
+            <fileNamePattern>${LOG_PATH}/info.${APP_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>40</maxHistory>
+        </rollingPolicy>
+        <!--日志输出编码格式化-->
+        <encoder>
+            <pattern>${GLOBAL_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="logFileDebug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--Debug级别日志-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+
+        <file>${LOG_PATH}/debug.${APP_NAME}.log</file>
+        <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
+            <fileNamePattern>${LOG_PATH}/debug.${APP_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>40</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${GLOBAL_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <!--指定最基础的日志输出级别-->
+    <root level="DEBUG">
+        <appender-ref ref="console"/>
+        <appender-ref ref="logFileInfo"/>
+        <appender-ref ref="logFileDebug"/>
+        <appender-ref ref="logFileError"/>
+    </root>
+
+</configuration>

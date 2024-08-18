@@ -1,5 +1,6 @@
 package com.zwk.su_netty.netty_server.http;
 
+import com.zwk.su_netty.log.LogConstant;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -11,6 +12,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
@@ -19,8 +21,8 @@ import java.net.URI;
  * @author zhengweikang
  * @date 2024/8/17 01:31
  */
+@Slf4j
 public class TargetHttpRequestInitializer {
-
     @SneakyThrows
     public static void connectToTargetServer(ChannelHandlerContext clientCtx, FullHttpRequest request) {
         request.retain();
@@ -29,21 +31,24 @@ public class TargetHttpRequestInitializer {
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
         String targetPath = request.uri();
+        boolean myRouter = false;
         String calculatePrefix = "/cost-calculate-service";
         if (method.compareTo(HttpMethod.OPTIONS) != 0 && StringUtils.startsWith(uri.getPath(), calculatePrefix)) {
             targetPath = StringUtils.substringAfter(targetPath, calculatePrefix);
             targetHost = "localhost";
             targetPort = 8094;
+            myRouter = true;
         }
         String centerPrefix = "/cost-center-service";
         if (method.compareTo(HttpMethod.OPTIONS) != 0 && StringUtils.startsWith(uri.getPath(), centerPrefix)) {
             targetPath = StringUtils.substringAfter(targetPath, centerPrefix);
             targetHost = "localhost";
             targetPort = 8092;
+            myRouter = true;
         }
-
-
+        final boolean finalMyRouter = myRouter;
         final String finalTargetPath = targetPath;
+
 
         SslContext sslCtx = null;
         if (uri.getScheme().equalsIgnoreCase("https")) {
@@ -52,11 +57,13 @@ public class TargetHttpRequestInitializer {
                         .trustManager(InsecureTrustManagerFactory.INSTANCE)
                         .build();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("error", e);
             }
         }
         final SslContext finalSslCtx = sslCtx;
-
+        if (finalMyRouter) {
+            LogConstant.myRouterLogger.info("转发到自己的机器的 request 旧url:{} 新url:{}\n", request.uri());
+        }
 
         Bootstrap b = new Bootstrap();
         b.group(clientCtx.channel().eventLoop())
@@ -70,7 +77,7 @@ public class TargetHttpRequestInitializer {
                         ch.pipeline().addLast(new HttpClientCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
-                        ch.pipeline().addLast(new TargetHttpHandler(clientCtx, uri, method));
+                        ch.pipeline().addLast(new TargetHttpHandler(clientCtx, uri, method, finalMyRouter));
                     }
                 });
 
@@ -87,6 +94,10 @@ public class TargetHttpRequestInitializer {
                         finalTargetPath,
                         request.content().copy()
                 );
+
+                if (finalMyRouter) {
+                    LogConstant.myRouterLogger.info("转发到自己的机器的 request 旧url:{} 新url:{}\n", request.uri(), fullRequest.uri());
+                }
 
                 for (CharSequence name : request.headers().names()) {
                     for (CharSequence value : request.headers().getAll(name)) {
