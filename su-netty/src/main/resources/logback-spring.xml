@@ -110,7 +110,7 @@
 
 
     <!--指定最基础的日志输出级别-->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="console"/>
         <appender-ref ref="logFileInfo"/>
         <appender-ref ref="logFileDebug"/>

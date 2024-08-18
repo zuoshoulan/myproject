@@ -17,7 +17,7 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        LogConstant.accessLogger.debug("access msg:{}\n", msg);
+        LogConstant.accessLogger.info("access msg:{}\n", msg);
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
             TargetHttpRequestInitializer.connectToTargetServer(ctx, request);
