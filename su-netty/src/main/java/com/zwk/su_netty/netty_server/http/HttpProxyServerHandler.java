@@ -28,8 +28,9 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
         LogConstant.accessLogger.info("access msg:{}\n", msg);
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
+            URI uri = createValidURI(request.uri());
             if ("CONNECT".equalsIgnoreCase(request.method().name())) {
-                handleConnectRequest(ctx, request);
+                handleConnectRequest(ctx, request, uri);
             } else {
                 TargetHttpRequestInitializer.connectToTargetServer(ctx, request);
             }
@@ -54,8 +55,7 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
         ctx.close();
     }
 
-    private void handleConnectRequest(ChannelHandlerContext ctx, FullHttpRequest request) {
-        URI uri = URI.create(request.uri());
+    private void handleConnectRequest(ChannelHandlerContext ctx, FullHttpRequest request, URI uri) {
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 443;
 
@@ -87,6 +87,18 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
         });
     }
 
+    private URI createValidURI(String uriString) {
+        if (!uriString.startsWith("http://") && !uriString.startsWith("https://")) {
+            // Add http:// as default protocol
+            uriString = "http://" + uriString;
+        }
+        try {
+            return new URI(uriString);
+        } catch (Exception e) {
+            log.error("Failed to create URI from string: {}", uriString, e);
+            throw new RuntimeException("Invalid URI format", e);
+        }
+    }
 
     // 定义一个 AttributeKey 用于存储 outboundChannel
     public static final io.netty.util.AttributeKey<Channel> outboundChannelKey = io.netty.util.AttributeKey.newInstance("outboundChannel");
