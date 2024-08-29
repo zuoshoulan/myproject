@@ -1,0 +1,74 @@
+cat Allegro.json | jq -r '.result.ofcSOrder | ("orderId: " + tostring(.orderId))'
+
+
+sku类目: {"XRJ2GXRJ10LX20001V1":"106229 Restaurant & Food Service"}
+
+cat Allegro.json | jq -r '"订单id "+\(.result.ofcSOrder.orderId), "salesMode:"+ .result.ofcSOrder.salesModeCode'
+
+cat Allegro.json | jq -r '.result.ofcSOrder.ofcOrderReviewResult.simulatedNetProfit'
+
+cat Allegro.json | jq -r '
+  .result |
+  [
+    ("订单id : \( .ofcSOrder.orderId )"),
+    ("销售模式: \(.ofcSOrder.salesModeCode)"),
+    ("订单类型: \(.businessType)"),
+    ("订单子类型: \(.ofcSOrder.platOrderType)"),
+    ("收入: \(.ofcSOrder.ofcOrderReviewResult.debugMap.cnyPayTotal)"),
+    ("其他小额销售费用: \(.ofcSOrder.ofcOrderReviewResult.debugMap.otherSmallSaleFeeCNY)"),
+    ("营业利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfit)"),
+    ("净利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfit)"),
+    ("营业利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfitRate)"),
+    ("净利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfitRate)")
+  ] | join("\n")
+'
+
+
+
+curl -s 'http://zwk.com:8092/api-profitReviewService/reviewOfcOrder' \
+--header 'Content-Type: application/json' \
+-d @/Users/wangnana/zwk/gram_tech/script/cost-center/otherSmallSaleFee/Allegro-1.json \
+| jq -r '
+  .result |
+  [
+    ("订单id : \( .ofcSOrder.orderId )"),
+    ("销售模式: \(.ofcSOrder.salesModeCode)"),
+    ("订单类型: \(.businessType)"),
+    ("订单子类型: \(.ofcSOrder.platOrderType)"),
+    ("收入: \(.ofcSOrder.ofcOrderReviewResult.debugMap.ebayTotal)"),
+    ("allCost: \(.ofcSOrder.ofcOrderReviewResult.debugMap.allCost)"),
+    ("其他小额销售费用rate: \(.ofcSOrder.ofcOrderReviewResult.debugMap.otherSmallSalesFeeRate)"),
+    ("其他小额销售费用: \(.ofcSOrder.ofcOrderReviewResult.debugMap.otherSmallSaleFeeCNY)"),
+    ("营业利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfit)"),
+    ("净利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfit)"),
+    ("营业利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfitRate)"),
+    ("净利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfitRate)")
+  ] | join("\n")
+'
+
+
+
+
+curl -s 'http://zwk.com:8093/api-profitReviewService/reviewOfcOrder' \
+--header 'Content-Type: application/json' \
+-d @/Users/wangnana/zwk/gram_tech/script/cost-center/otherSmallSaleFee/Temu.json \
+| jq -r '
+  .result |
+  [
+    ("订单id : \( .ofcSOrder.orderId )"),
+    ("平台: \(.ofcSOrder.platformCode)"),
+    ("销售模式: \(.ofcSOrder.salesModeCode)"),
+    ("站点: \(.ofcSOrder.site)"),
+    ("订单类型: \(.businessType)"),
+    ("订单子类型: \(.ofcSOrder.platOrderType)"),
+    ("收入: \(.ofcSOrder.ofcOrderReviewResult.debugMap.ebayTotal)"),
+    ("allCost: \(.ofcSOrder.ofcOrderReviewResult.debugMap.allCost)"),
+    ("其他小额销售费用rate: \(.ofcSOrder.ofcOrderReviewResult.debugMap.otherSmallSalesFeeRate)"),
+    ("其他小额销售费用: \(.ofcSOrder.ofcOrderReviewResult.debugMap.otherSmallSaleFeeCNY)"),
+    ("营业利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfit)"),
+    ("净利润: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfit)"),
+    ("营业利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedGrossProfitRate)"),
+    ("净利润率: \(.ofcSOrder.ofcOrderReviewResult.simulatedNetProfitRate)"),
+    ("sku类目: \(.ofcSOrder.ofcOrderReviewResult.debugMap.skuMap)")
+  ] | join("\n")
+'

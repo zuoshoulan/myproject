@@ -26,7 +26,11 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         LogConstant.accessLogger.info("access msg:{}\n", msg);
-        if (msg instanceof FullHttpRequest) {
+
+        if (ctx.channel().attr(outboundChannelKey).get() != null) {
+            Channel outboundChannel = ctx.channel().attr(outboundChannelKey).get();
+            outboundChannel.writeAndFlush(msg);
+        } else if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
             URI uri = createValidURI(request.uri());
             if ("CONNECT".equalsIgnoreCase(request.method().name())) {
@@ -34,11 +38,6 @@ public class HttpProxyServerHandler extends ChannelDuplexHandler {
             } else {
                 TargetHttpRequestInitializer.connectToTargetServer(ctx, request);
             }
-        } else if (ctx.channel().attr(outboundChannelKey).get() != null) {
-            Channel outboundChannel = ctx.channel().attr(outboundChannelKey).get();
-            outboundChannel.writeAndFlush(msg);
-        } else {
-
         }
         ReferenceCountUtil.release(msg);
     }

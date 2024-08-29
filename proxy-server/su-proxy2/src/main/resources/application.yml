@@ -1,0 +1,12 @@
+server:
+  port: 8080
+#  ssl:
+#    enabled: true
+#    protocol: TLS
+#    key-store: 'classpath:keystore/keystore.p12'
+#    key-store-password: 'azul0906'
+#    key-store-type: PKCS12
+#    key-alias: tomcat
+
+# openssl s_client -connect localhost:8443 < /dev/null 2>/dev/null | openssl x509 -outform PEM > server.crt
+# /Users/wangnana/zwk/gram_tech/tools/proxy-server/su-proxy2/src/main/resources/server.crt
