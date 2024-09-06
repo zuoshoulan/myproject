@@ -1,5 +1,6 @@
 package com.zwk.su_netty.netty_server;
 
+import com.zwk.su_netty.netty_server.forward.ForwardProxyServerInitialzer;
 import com.zwk.su_netty.netty_server.http.HttpProxyServerInitializer;
 import com.zwk.su_netty.netty_server.socket.SocketProxyServerInitialzer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -32,7 +33,7 @@ public class NettyMain {
         thread01.start();
 
         Thread thread02 = new Thread(() -> {
-            socketProxyServerStart();
+            forwardProxyServerStart();
         });
         thread02.setDaemon(false);
         thread02.start();
@@ -60,14 +61,14 @@ public class NettyMain {
     }
 
     @SneakyThrows
-    private void socketProxyServerStart() {
+    private void forwardProxyServerStart() {
         int port = 8088;
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new SocketProxyServerInitialzer());
+                    .childHandler(new ForwardProxyServerInitialzer());
 
             ChannelFuture f = b.bind(port).sync();
 
