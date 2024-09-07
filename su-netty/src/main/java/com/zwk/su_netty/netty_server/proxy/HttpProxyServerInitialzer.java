@@ -175,8 +175,8 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
         private final Channel client2ProxyChannel;
 
 
-        public TargetHttpHandler(Channel serverChannel) {
-            this.client2ProxyChannel = serverChannel;
+        public TargetHttpHandler(Channel client2ProxyChannel) {
+            this.client2ProxyChannel = client2ProxyChannel;
         }
 
         @Override
