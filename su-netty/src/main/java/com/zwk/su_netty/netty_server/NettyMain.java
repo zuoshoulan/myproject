@@ -37,6 +37,12 @@ public class NettyMain {
         });
         thread02.setDaemon(false);
         thread02.start();
+
+        Thread thread03 = new Thread(() -> {
+            socketProxyServerStart();
+        });
+        thread03.setDaemon(false);
+        thread03.start();
     }
 
     @SneakyThrows
@@ -81,5 +87,26 @@ public class NettyMain {
         }
     }
 
+
+    @SneakyThrows
+    private void socketProxyServerStart() {
+        int port = 8089;
+        try {
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .childHandler(new SocketProxyServerInitialzer());
+
+            ChannelFuture f = b.bind(port).sync();
+
+            System.out.println("SOCKET server started at http://localhost:" + port);
+
+            f.channel().closeFuture().sync();
+        } finally {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
+    }
 
 }
