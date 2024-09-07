@@ -11,7 +11,7 @@ import java.net.URI;
 @Slf4j
 public class UriUtil {
 
-    private static URI createValidURI(String uriString, boolean ishttps) {
+    public static URI createValidURI(String uriString, boolean ishttps) {
         if (!uriString.startsWith("http://") && !uriString.startsWith("https://")) {
             // Add http:// as default protocol
             if (ishttps) {

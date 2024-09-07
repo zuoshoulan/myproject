@@ -1,8 +1,8 @@
 package com.zwk.su_netty.netty_server;
 
-import com.zwk.su_netty.netty_server.forward.ForwardProxyServerInitialzer;
+import com.zwk.su_netty.netty_server.proxy.HttpProxyServerInitialzer;
 import com.zwk.su_netty.netty_server.http.HttpProxyServerInitializer;
-import com.zwk.su_netty.netty_server.socket.SocketProxyServerInitialzer;
+import com.zwk.su_netty.netty_server.proxy.HttpsProxyServerInitialzer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -74,7 +74,7 @@ public class NettyMain {
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new ForwardProxyServerInitialzer());
+                    .childHandler(new HttpProxyServerInitialzer());
 
             ChannelFuture f = b.bind(port).sync();
 
@@ -96,7 +96,7 @@ public class NettyMain {
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new SocketProxyServerInitialzer());
+                    .childHandler(new HttpsProxyServerInitialzer());
 
             ChannelFuture f = b.bind(port).sync();
 

@@ -1,6 +1,7 @@
-package com.zwk.su_netty.netty_server.forward;
+package com.zwk.su_netty.netty_server.proxy;
 
 import com.zwk.su_netty.log.LogConstant;
+import com.zwk.su_netty.utils.UriUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -24,7 +25,7 @@ import java.net.URI;
  * @date 2024/9/7 02:47
  */
 @Slf4j
-public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChannel> {
+public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
@@ -65,29 +66,13 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
 
     public static final io.netty.util.AttributeKey<Channel> f_targetChannelAttributeKey = io.netty.util.AttributeKey.newInstance("f_targetChannelAttributeKey");
 
-    private static URI createValidURI(String uriString, boolean ishttps) {
-        if (!uriString.startsWith("http://") && !uriString.startsWith("https://")) {
-            // Add http:// as default protocol
-            if (ishttps) {
-                uriString = "https://" + uriString;
-            } else {
-                uriString = "http://" + uriString;
-            }
-        }
-        try {
-            return new URI(uriString);
-        } catch (Exception e) {
-            log.error("Failed to create URI from string: {}", uriString, e);
-            throw new RuntimeException("Invalid URI format", e);
-        }
-    }
 
     @SneakyThrows
-    public static void connectToTargetServer(Channel serverChannel, FullHttpRequest request, boolean ishttps) {
+    public static void connectToTargetServer(Channel client2ProxyChannel, FullHttpRequest request, boolean ishttps) {
         request.retain();
         final HttpMethod method = request.method();
 //        URI uri = new URI(request.uri());
-        URI uri = createValidURI(request.uri(), ishttps);
+        URI uri = UriUtil.createValidURI(request.uri(), ishttps);
         String targetHost = uri.getHost();
         int targetPort = uri.getPort() != -1 ? uri.getPort() : 80;
         if (cn.hutool.http.HttpUtil.isHttps(request.uri()) && uri.getPort() != -1) {
@@ -112,7 +97,7 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
         final SslContext sslCtx = sslCtxTmp;
 
         Bootstrap b = new Bootstrap();
-        b.group(serverChannel.eventLoop())
+        b.group(client2ProxyChannel.eventLoop())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
@@ -125,7 +110,7 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
                         ch.pipeline().addLast(new HttpClientCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
-                        ch.pipeline().addLast(new TargetHttpHandler(serverChannel));
+                        ch.pipeline().addLast(new TargetHttpHandler(client2ProxyChannel));
                     }
                 });
 
@@ -135,7 +120,7 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
             if (future.isSuccess()) {
                 log.info("代理服务与远端建立连接成功");
                 Channel targetChannel = future.channel();
-                serverChannel.attr(f_targetChannelAttributeKey).set(targetChannel);
+                client2ProxyChannel.attr(f_targetChannelAttributeKey).set(targetChannel);
                 if ("CONNECT".equalsIgnoreCase(request.method().name())) {
 
                     DefaultFullHttpResponse response = new DefaultFullHttpResponse(
@@ -144,7 +129,7 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
                     // 设置响应头
                     response.headers().add(HttpHeaderNames.CONTENT_LENGTH, 0);
                     response.headers().add(HttpHeaderNames.PROXY_CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-                    serverChannel.writeAndFlush(response);
+                    client2ProxyChannel.writeAndFlush(response);
 
 
                 } else {
@@ -178,8 +163,8 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
                 FullHttpResponse response = new DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1,
                         HttpResponseStatus.BAD_GATEWAY);
-                serverChannel.writeAndFlush(response);
-                serverChannel.close();
+                client2ProxyChannel.writeAndFlush(response);
+                client2ProxyChannel.close();
 
             }
         });
@@ -187,11 +172,11 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
 
     public static class TargetHttpHandler extends ChannelDuplexHandler {
 
-        private final Channel serverChannel;
+        private final Channel client2ProxyChannel;
 
 
         public TargetHttpHandler(Channel serverChannel) {
-            this.serverChannel = serverChannel;
+            this.client2ProxyChannel = serverChannel;
         }
 
         @Override
@@ -206,12 +191,12 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
 //                FullHttpResponse response = (FullHttpResponse) msg;
 //                response.headers().add("proxy", "zwk");
 //            }
-            serverChannel.write(msg);
+            client2ProxyChannel.write(msg);
         }
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-            serverChannel.flush();
+            client2ProxyChannel.flush();
         }
 
         @Override
@@ -223,7 +208,7 @@ public class ForwardProxyServerInitialzer extends ChannelInitializer<SocketChann
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             log.error("代理与目标服务器 exceptionCaught", cause);
             ctx.close();
-            serverChannel.close();
+            client2ProxyChannel.close();
         }
     }
 }

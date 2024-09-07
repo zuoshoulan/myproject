@@ -1,0 +1,11 @@
+
+#打包命令
+mvn  clean package -Dmaven.test.skip=true -Djava.home=/root/soft/jdk-22.0.2/
+
+
+
+cd /root/code/su-tools/ && \
+git pull -p && \
+JAVA_HOME=/root/soft/jdk-22.0.2 mvn -f su-netty/pom.xml clean package -Dmaven.test.skip=true && \
+java22 -jar -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5008 \
+su-netty/target/su-netty-0.0.1-SNAPSHOT.jar
