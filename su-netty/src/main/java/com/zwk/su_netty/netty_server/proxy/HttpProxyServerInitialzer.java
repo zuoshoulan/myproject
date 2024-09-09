@@ -85,7 +85,6 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
 
         HttpVersion httpVersion = request.protocolVersion();
 
-        final String finalTargetPath = targetPath;
         boolean myRouter = false;
 
         String calculatePrefix = "/cost-calculate-service";
@@ -102,6 +101,8 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
             targetPort = 8092;
             myRouter = true;
         }
+
+        final String finalTargetPath = targetPath;
 
         SslContext sslCtxTmp = null;
         try {
