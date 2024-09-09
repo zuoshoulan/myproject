@@ -16,6 +16,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 
@@ -26,6 +27,8 @@ import java.net.URI;
  */
 @Slf4j
 public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel> {
+
+    static String myTargetHost = "10.144.122.108";
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
@@ -83,6 +86,22 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
         HttpVersion httpVersion = request.protocolVersion();
 
         final String finalTargetPath = targetPath;
+        boolean myRouter = false;
+
+        String calculatePrefix = "/cost-calculate-service";
+        if (method.compareTo(HttpMethod.OPTIONS) != 0 && StringUtils.startsWith(uri.getPath(), calculatePrefix)) {
+            targetPath = StringUtils.substringAfter(targetPath, calculatePrefix);
+            targetHost = myTargetHost;
+            targetPort = 8094;
+            myRouter = true;
+        }
+        String centerPrefix = "/cost-center-service";
+        if (method.compareTo(HttpMethod.OPTIONS) != 0 && StringUtils.startsWith(uri.getPath(), centerPrefix)) {
+            targetPath = StringUtils.substringAfter(targetPath, centerPrefix);
+            targetHost = myTargetHost;
+            targetPort = 8092;
+            myRouter = true;
+        }
 
         SslContext sslCtxTmp = null;
         try {
@@ -95,6 +114,7 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
             throw new RuntimeException(e);
         }
         final SslContext sslCtx = sslCtxTmp;
+        final boolean finalMyRouter = myRouter;
 
         Bootstrap b = new Bootstrap();
         b.group(client2ProxyChannel.eventLoop())
@@ -110,7 +130,7 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
                         ch.pipeline().addLast(new HttpClientCodec());
                         ch.pipeline().addLast(new HttpObjectAggregator(1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
-                        ch.pipeline().addLast(new TargetHttpHandler(client2ProxyChannel));
+                        ch.pipeline().addLast(new TargetHttpHandler(client2ProxyChannel, finalMyRouter));
                     }
                 });
 
@@ -173,10 +193,11 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
     public static class TargetHttpHandler extends ChannelDuplexHandler {
 
         private final Channel client2ProxyChannel;
+        boolean myRouter = false;
 
-
-        public TargetHttpHandler(Channel client2ProxyChannel) {
+        public TargetHttpHandler(Channel client2ProxyChannel, boolean myRouter) {
             this.client2ProxyChannel = client2ProxyChannel;
+            this.myRouter = myRouter;
         }
 
         @Override
@@ -187,10 +208,13 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//            if (msg instanceof FullHttpResponse) {
-//                FullHttpResponse response = (FullHttpResponse) msg;
-//                response.headers().add("proxy", "zwk");
-//            }
+            if (msg instanceof FullHttpResponse) {
+                FullHttpResponse response = (FullHttpResponse) msg;
+                response.headers().add("proxy", "zwk");
+                if (myRouter) {
+                    response.headers().add("proxy-final-host", myTargetHost);
+                }
+            }
             client2ProxyChannel.write(msg);
         }
 
