@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -214,9 +216,36 @@ public class HttpProxyServerInitialzer extends ChannelInitializer<SocketChannel>
                 response.headers().add("proxy", "zwk");
                 if (myRouter) {
                     response.headers().add("proxy-final-host", myTargetHost);
+                    fillCorsrHeaders(response);
                 }
             }
             client2ProxyChannel.write(msg);
+        }
+
+        private void fillCorsrHeaders(FullHttpResponse response) {
+            Map<String, Object> map = new HashMap();
+            map.put("Access-Control-Allow-Credentials", true);
+            map.put("Access-Control-Allow-Headers", "authorization");
+
+            map.put("Access-Control-Allow-Origin", "http://sem-dev.vevor-internal.net");
+            map.put("Access-Control-Expose-Headers", "*");
+            map.put("Access-Control-Max-Age", 18000L);
+
+
+            map.put("Access-Control-Allow-Methods", "GET");
+
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (StringUtils.isEmpty(response.headers().get(key))) {
+                    response.headers().add(key, value);
+                }
+            }
+
+            String accessControlAllowCredentials = "Access-Control-Allow-Credentials";
+            if (StringUtils.isEmpty(response.headers().get(accessControlAllowCredentials))) {
+                response.headers().add(accessControlAllowCredentials, true);
+            }
         }
 
         @Override
